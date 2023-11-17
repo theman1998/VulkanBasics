@@ -486,8 +486,8 @@ namespace V
 	void Window::createGraphicsPipeline()
 	{
 
-		std::vector<char> vertShaderCode = readFile("vert.spv");
-		std::vector<char> fragShaderCode = readFile("frag.spv");
+		std::vector<char> vertShaderCode = readFile("shaders/vert.spv");
+		std::vector<char> fragShaderCode = readFile("shaders/frag.spv");
 
 		//Local variables because this happens after the pipeline is created.
 		// Only needed within this call stack
