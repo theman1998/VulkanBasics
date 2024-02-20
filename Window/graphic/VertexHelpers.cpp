@@ -16,12 +16,16 @@ namespace V
     return bindingDescription;
 }
 
+    bool Vertex::operator==(const Vertex& other) const {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
+
 std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescriptions()
 {
     std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0; // Look into our sharder.vert file. 
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; // first input is 2d
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
     attributeDescriptions[1].binding = 0;

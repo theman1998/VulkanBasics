@@ -10,6 +10,8 @@
 
 #include <vector>
 
+#include "VertexHelpers.h"
+
 namespace V
 {
 
@@ -17,6 +19,8 @@ namespace V
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
+
 
 class Window
 {
@@ -63,20 +67,33 @@ protected:
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-    VkImageView createImageView(VkImage image, VkFormat format);
+    void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+
+    void createDepthResources();
 
     void drawFrame();
     void updateUniformBuffer(uint32_t currentImage);
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void recreateSwapChain();
 
+    
+    void loadModel();
+
 
     // Helpers
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findDepthFormat();
+    bool hasStencilComponent(VkFormat format); // Part of the Depth options. Found in the flag
+
+    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+    VkSampleCountFlagBits getMaxUsableSampleCount();
+    void createColorResources();
 
 private:
     GLFWwindow* window;
@@ -121,6 +138,8 @@ private:
     std::vector < VkCommandBuffer > commandBuffers;
 
     // dynamically controll the vertex input
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory; // allocated memory for gpu
     VkBuffer indexBuffer;
@@ -132,14 +151,26 @@ private:
     std::vector<void*> uniformBuffersMapped;
 
     // Images pixel are mapped on a 2d plane with colors. They are referered to as "TEXELS"
+    uint32_t mipLevels; // Used in Level of design. Halfing the image size each level.
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView; //fpr texture image
     VkSampler textureSampler; // Distink from the image. Can be used to extra pixels from any image
 
+    // Uses same calls as the texture. Allows the rasterizer to do a depth check
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
+
     // Used coasside with the uniform buffers
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
+
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkImage colorImage; // msaa requires to be processes of screen. So we need a new buffer to store the multisample pixels
+    VkDeviceMemory colorImageMemory;
+    VkImageView colorImageView;
+
 
     // Synchronization Objects
     // Examples: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples#swapchain-image-acquire-and-present

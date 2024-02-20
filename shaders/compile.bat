@@ -8,8 +8,8 @@ if not exist "%CompileDirectory%\" (
     md "%CompileDirectory%"
 )
 
-C:\Code_Libraries\vulkan\Bin/glslc.exe shader.vert -o compiled/vert.spv
-C:\Code_Libraries\vulkan\Bin/glslc.exe shader.frag -o compiled/frag.spv
+C:\Libs\VulkanSDK\Bin/glslc.exe shader.vert -o compiled/vert.spv
+C:\Libs\VulkanSDK\Bin/glslc.exe shader.frag -o compiled/frag.spv
 
 
 
@@ -20,3 +20,4 @@ if not exist "%BinDirectory%\" (
 
 robocopy "%CompileDirectory%" "%BinDirectory%/shaders" /E
 robocopy "textures" "%BinDirectory%/textures" /E
+robocopy "models" "%BinDirectory%/models" /E

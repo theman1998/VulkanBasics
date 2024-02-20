@@ -1,5 +1,8 @@
 #include "graphic/VWindow.h"
 
+// Current Chapter: Compute Shader
+// https://vulkan-tutorial.com/Compute_Shader
+
 #include <iostream>
 int main() {
     V::Window app;

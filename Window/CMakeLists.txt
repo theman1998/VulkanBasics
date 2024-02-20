@@ -47,6 +47,7 @@ target_include_directories( ${PROJECT_NAME} PUBLIC
  "${GLFW_PATH}/include"
  "${VULKAN_PATH}/include"
  "${STB_PATH}"
+ "${TINYOBJECTLOADER_PATH}"
 )
 
 target_link_directories( ${PROJECT_NAME} PUBLIC 

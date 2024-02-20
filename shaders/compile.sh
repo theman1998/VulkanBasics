@@ -19,3 +19,4 @@ fi
 
 cp -r "$CompileDirectory" "$BinDirectory/shaders"
 cp -r "textures" "$BinDirectory/textures"
+cp -r "models" "$BinDirectory/models"
