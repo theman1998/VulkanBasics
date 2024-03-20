@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
-
+#include <array>
 
 namespace GE
 {
@@ -14,6 +14,6 @@ namespace GE
 	using ErrorMessage = std::string;
 
 
-
+	using CommandBuffers = std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT>;
 
 }

@@ -34,6 +34,8 @@ namespace GE
 		void triggerBufferResizeFlag(bool state = true);
 
 		static std::unique_ptr<DeviceWindow> CreateDeviceWindow(TYPE typeOfWindow = TYPE::GLFW, Area = Area(1200,800));
+
+		void* ownerReferencePointer{nullptr};// Used by the core to be used with callbacks. Not pretty
 	private:
 		void* window;
 		TYPE type;
@@ -70,10 +72,13 @@ namespace GE
 
 		static std::unique_ptr<Sync> CreateSync(VkDevice);
 
+		template<class T>
+		using FrameArray = std::array<T, MAX_FRAMES_IN_FLIGHT>;
+
 		// Examples: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples#swapchain-image-acquire-and-present
-		std::vector < VkSemaphore > imageAvailableSemaphores;
-		std::vector < VkSemaphore > renderFinishedSemaphores;
-		std::vector < VkFence > inFlightFences;
+		FrameArray< VkSemaphore > imageAvailableSemaphores;
+		FrameArray< VkSemaphore > renderFinishedSemaphores;
+		FrameArray< VkFence > inFlightFences;
 
 		VkDevice device{ nullptr };
 	};
@@ -98,6 +103,25 @@ namespace GE
 		static GraphicDeviceGroup CreateBaseGroup();
 	};
 
+
+
+	class GraphicsCommandPool {
+	public:
+		GraphicsCommandPool(VkDevice device = nullptr);
+		~GraphicsCommandPool();
+		void Free();
+		void setDevice(VkDevice device);
+		bool init(VkPhysicalDevice, VkSurfaceKHR);
+
+		CommandBuffers& getCommandBuffers();
+		VkCommandPool& getCommandPool();
+
+		std::string currentError;
+	private:
+		VkCommandPool commandPool;
+		VkDevice device;
+		CommandBuffers commandBuffers;
+	};
 	
 
 }

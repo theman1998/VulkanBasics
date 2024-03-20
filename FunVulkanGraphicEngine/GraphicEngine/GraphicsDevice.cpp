@@ -276,17 +276,13 @@ namespace GE {
 		auto& sync = *(syncPtr.get());
 		sync.device = device;
 
-
-		sync.imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		sync.renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		sync.inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 		VkFenceCreateInfo fenceInfo{};
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // requires so we don't block indefinitely on vkWaitForFences for first instance
+
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.imageAvailableSemaphores[i]) != VK_SUCCESS ||
@@ -317,6 +313,80 @@ namespace GE {
 
 
 		return res;
+	}
+
+
+	GraphicsCommandPool::GraphicsCommandPool(VkDevice device) : commandPool(nullptr), device(device), commandBuffers({ nullptr,nullptr })
+	{
+	}
+	GraphicsCommandPool::~GraphicsCommandPool() = default;
+	void GraphicsCommandPool::Free()
+	{
+		if (device == nullptr)return;
+		if (commandPool != nullptr) { vkDestroyCommandPool(device, commandPool, nullptr); }
+	}
+	void GraphicsCommandPool::setDevice(VkDevice device)
+	{
+		this->device = device;
+	}
+
+	CommandBuffers& GraphicsCommandPool::getCommandBuffers()
+	{
+		return commandBuffers;
+	}
+	VkCommandPool& GraphicsCommandPool::getCommandPool()
+	{
+		return commandPool;
+	}
+
+	bool GraphicsCommandPool::init(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+	{
+		if (device == nullptr)
+		{
+			currentError = "Device is null while creating command info";
+			return false;
+		}
+		else if (physicalDevice == nullptr)
+		{
+			currentError = "physicalDevice is null while creating command info";
+			return false;
+		}
+		else if (surface == nullptr)
+		{
+			currentError = "surface is null while creating command info";
+			return false;
+		}
+
+
+		Util::QueueFamilyIndices indices = Util::findQueueFamilies(physicalDevice, const_cast<VkSurfaceKHR&>(surface));
+
+		VkCommandPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Allow the buffer to be rerecoreded individually. Other commands can be found here
+		// https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Command_buffers
+		poolInfo.queueFamilyIndex = *indices.graphicsFamily;
+
+		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+		{
+			currentError = "failed to create command pool!";
+			return false;
+		}
+
+
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY; // specifies if it's primary or secondary command buffers
+		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		{
+			currentError = "failed to allocate command buffers!";
+			return false;
+		}
+
+
+		return true;
 	}
 
 }

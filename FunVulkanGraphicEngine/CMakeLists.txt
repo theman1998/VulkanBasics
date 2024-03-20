@@ -2,36 +2,55 @@ set(PROJECT_NAME FunVulkanGraphicEngine)
 
 set(PROJECT_SOURCES
     "main.cpp"
-    "GraphicEngine/GraphicsCore.cpp"
+    "GraphicEngine/GraphicsCorePIMPL.cpp"
+
     "GraphicEngine/GraphicsDevice.cpp"
     "GraphicEngine/GraphicsPipeline.cpp"
+    "GraphicEngine/GraphicsPipelineE2E.cpp"
     "GraphicEngine/GraphicsQueue.cpp"
     "GraphicEngine/GraphicsSwapchain.cpp"
     "GraphicEngine/GraphicsObjectController.cpp"
     "GraphicEngine/GraphicsVertex.cpp"
+    "GraphicEngine/PipelinesIdMapping.cpp"
     "GraphicEngine/Validation.cpp"
-
 
     "GraphicEngine/Utility/DeviceSupport.cpp"
     "GraphicEngine/Utility/MemorySupport.cpp"
+
+    "source/object/ThingBase.cpp"
+    "source/object/ThingManager.cpp"
+    "source/object/Camera.cpp"
+
+    "source/GraphicsCore.cpp"
+    "source/input/InputBase.cpp"
 
 )
 
 set(PROJECT_HEADERS
     "GraphicEngine/ConstDefines.hpp"
     "GraphicEngine/Validation.hpp"
-    "GraphicEngine/GraphicsCore.hpp"
+    "GraphicEngine/GraphicsCorePIMPL.hpp"
     "GraphicEngine/GraphicsDevice.hpp"
     "GraphicEngine/GraphicsQueue.hpp"
     "GraphicEngine/GraphicsPipeline.hpp"
+    "GraphicEngine/GraphicsPipelineE2E.hpp"
     "GraphicEngine/GraphicsSwapchain.hpp"
     "GraphicEngine/GraphicsObjectController.hpp"
     "GraphicEngine/GraphicsVertex.hpp"
+    "GraphicEngine/ThingManagerPIMPL.hpp"
+    "GraphicEngine/PipelinesIdMapping.hpp"
 
     "GraphicEngine/Utility/DeviceSupport.hpp"
     "GraphicEngine/Utility/MemorySupport.hpp"
 
-    "public/StandardInclude.hpp"
+    "include/StandardInclude.hpp"
+    "include/GraphicsCore.hpp"
+
+    "include/object/ThingBase.hpp"
+    "include/object/ThingManager.hpp"
+    "include/object/Camera.hpp"
+    "include/object/UID.hpp"
+    "include/input/InputBase.hpp"
 )
 
 
@@ -49,6 +68,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
     #target_compile_options( ${PROJECT_NAME} PUBLIC "/Zc:__cplusplus")
     #target_compile_options( ${PROJECT_NAME} PUBLIC /permissive-)
+    #target_compile_options( ${PROJECT_NAME} PUBLIC "/Zc:preprocessor")
 endif()
 
 

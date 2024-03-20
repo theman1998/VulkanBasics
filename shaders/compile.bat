@@ -9,6 +9,8 @@ if not exist "%CompileDirectory%\" (
 )
 
 C:\Libs\VulkanSDK\Bin/glslc.exe shader.vert -o compiled/vert.spv
+
+C:\Libs\VulkanSDK\Bin/glslc.exe shader_alterColor.frag -o compiled/fragAlter.spv
 C:\Libs\VulkanSDK\Bin/glslc.exe shader.frag -o compiled/frag.spv
 
 

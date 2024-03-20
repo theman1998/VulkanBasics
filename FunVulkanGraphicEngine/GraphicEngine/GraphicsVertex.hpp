@@ -122,6 +122,15 @@ namespace GE
 	};
 
 
+	struct TextureMetaData
+	{
+		unsigned char *imageData{nullptr};
+		uint16_t pixelSize{ 4 };
+		int pictureWidth{ 0 };
+		int pictureHeight{ 0 };
+		uint32_t mipLevel{ 0 };
+	};
+
 	class GraphicsTextureHandle
 	{
 	public:
@@ -132,6 +141,7 @@ namespace GE
 		const UniformTextureInternals& Internals()const;
 
 		bool init(std::string_view filePath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool, VkDescriptorSetLayout descriptorSetLayout);
+		bool init(const TextureMetaData&, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool, VkDescriptorSetLayout descriptorSetLayout);
 
 	private:
 

@@ -456,6 +456,25 @@ namespace GE
 	const UniformTextureInternals& GraphicsTextureHandle::Internals()const { return internals; }
 	bool GraphicsTextureHandle::init(std::string_view filePath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool, VkDescriptorSetLayout descriptorSetLayout)
 	{
+		TextureInternal& textureInfo = internals.texture;
+
+		
+		TextureMetaData fileData;
+		fileData.pixelSize = STBI_rgb_alpha;
+		// Will be using command buffer to store our image object. The images can be found in shader/texures
+		int texChannels;
+		// Force the load to create alpha, so it consistant with all other texures
+		fileData.imageData = stbi_load(filePath.data(), &fileData.pictureWidth, &fileData.pictureHeight, &texChannels, fileData.pixelSize);
+		textureInfo.textureFile = std::string(filePath);
+		if (!fileData.imageData) { currentError = "failed to load texture image!"; return false; }
+		bool state = init(fileData,device,physicalDevice,graphicsQueue,commandPool,descriptorSetLayout);
+		stbi_image_free(fileData.imageData);
+		return state;
+	}
+
+
+	bool GraphicsTextureHandle::init(const TextureMetaData& textureData, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool, VkDescriptorSetLayout descriptorSetLayout)
+	{
 		if (device == nullptr) {
 			currentError = "Must insert a valid device";
 			return false;
@@ -476,33 +495,24 @@ namespace GE
 		}
 		this->device = device;
 		TextureInternal& textureInfo = internals.texture;
-
-		// Will be using command buffer to store our image object. The images can be found in shader/texures
-		int texWidth, texHeight, texChannels;
-		// Force the load to create alpha, so it consistant with all other texures
-		stbi_uc* pixels = stbi_load(filePath.data(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		textureInfo.textureFile = std::string(filePath);
-
-		textureInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max<int>(texWidth, texHeight)))) + 1;
-
-		// X by 4 because of pixel colors
-		VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-		if (!pixels) { currentError = "failed to load texture image!"; return false; }
-
 		// Copying image data to our vk buffer
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
+
+		textureInfo.mipLevels = textureData.mipLevel;
+		if (textureInfo.mipLevels == 0) { textureInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max<int>(textureData.pictureWidth, textureData.pictureHeight)))) + 1; }
+		
+		VkDeviceSize imageSize = textureData.pictureWidth * textureData.pictureHeight * textureData.pixelSize;
+
 		createBuffer(device, physicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 		void* data;
 		vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data); // Going to allocate memory to persistant memory
-		memcpy(data, pixels, static_cast<size_t>(imageSize));
+		memcpy(data, textureData.imageData, static_cast<size_t>(imageSize));
 		vkUnmapMemory(device, stagingBufferMemory);
 
-		stbi_image_free(pixels);
 
 		std::string errorMessage;
-		errorMessage = Util::createImage(device, physicalDevice, texWidth, texHeight, textureInfo.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+		errorMessage = Util::createImage(device, physicalDevice, textureData.pictureWidth, textureData.pictureHeight, textureInfo.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureInfo.textureImage, textureInfo.textureImageMemory);
 		if (!errorMessage.empty()) { currentError = "createImage:" + errorMessage; return false; }
 
@@ -510,10 +520,10 @@ namespace GE
 		errorMessage = transitionImageLayout(device, commandPool, graphicsQueue, textureInfo.textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, textureInfo.mipLevels);
 		if (!errorMessage.empty()) { currentError = "transitionImageLayout:" + errorMessage; return false; }
 
-		errorMessage = copyBufferToImage(device, commandPool, graphicsQueue, stagingBuffer, textureInfo.textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));// Moving the data down the pipeline
+		errorMessage = copyBufferToImage(device, commandPool, graphicsQueue, stagingBuffer, textureInfo.textureImage, static_cast<uint32_t>(textureData.pictureWidth), static_cast<uint32_t>(textureData.pictureHeight));// Moving the data down the pipeline
 		if (!errorMessage.empty()) { currentError = "copyBufferToImage:" + errorMessage; return false; }
 
-		errorMessage = generateMipmaps(device, physicalDevice, commandPool, graphicsQueue, textureInfo.textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, textureInfo.mipLevels);
+		errorMessage = generateMipmaps(device, physicalDevice, commandPool, graphicsQueue, textureInfo.textureImage, VK_FORMAT_R8G8B8A8_SRGB, textureData.pictureWidth, textureData.pictureHeight, textureInfo.mipLevels);
 		if (!errorMessage.empty()) { currentError = "generateMipmaps:" + errorMessage; return false; }
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
